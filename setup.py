@@ -3,9 +3,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='chipwhispererminimal',
+    name='chipwhisperer',
     version='5.6.1',
-    description='ChipWhisperer Side-Channel Analysis Tool',
+    description='Minimal version of ChipWhisperer that only supports the CW310',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author='NewAE Technology Inc',
