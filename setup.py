@@ -24,5 +24,5 @@ setup(
         'Source': 'https://github.com/newaetech/chipwhisperer',
         'Issue Tracker': 'https://github.com/newaetech/chipwhisperer/issues',
     },
-    python_requires='~=3.7',
+    python_requires='~=3.6',
 )
