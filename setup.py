@@ -6,7 +6,7 @@ setup(
     name='chipwhispererminimal',
     version='5.6.1',
     description='ChipWhisperer Side-Channel Analysis Tool',
-    long_description=open('../README.md').read(),
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author='NewAE Technology Inc',
     author_email='sales@newae.com',
