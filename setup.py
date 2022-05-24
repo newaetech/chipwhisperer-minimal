@@ -21,8 +21,8 @@ setup(
     ],
     project_urls={
         'Documentation': 'https://chipwhisperer.readthedocs.io',
-        'Source': 'https://github.com/newaetech/chipwhisperer',
-        'Issue Tracker': 'https://github.com/newaetech/chipwhisperer/issues',
+        'Source': 'https://github.com/newaetech/chipwhisperer-minimal',
+        'Issue Tracker': 'https://github.com/newaetech/chipwhisperer-minimal/issues',
     },
     python_requires='~=3.6',
 )
