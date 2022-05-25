@@ -3,10 +3,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='chipwhispererminimal',
+    name='chipwhisperer',
     version='5.6.1',
     description='ChipWhisperer Side-Channel Analysis Tool',
-    long_description=open('../README.md').read(),
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author='Colin O\'Flynn',
     author_email='coflynn@newae.com',
@@ -21,8 +21,8 @@ setup(
     ],
     project_urls={
         'Documentation': 'https://chipwhisperer.readthedocs.io',
-        'Source': 'https://github.com/newaetech/chipwhisperer',
-        'Issue Tracker': 'https://github.com/newaetech/chipwhisperer/issues',
+        'Source': 'https://github.com/newaetech/chipwhisperer-minimal',
+        'Issue Tracker': 'https://github.com/newaetech/chipwhisperer-minimal/issues',
     },
-    python_requires='~=3.7',
+    python_requires='~=3.6',
 )

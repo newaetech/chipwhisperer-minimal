@@ -24,6 +24,7 @@ import usb1  # type: ignore
 import os
 import array
 from typing import Optional, Union, List, Tuple, Dict, cast
+from ...common.utils.util import bytearray # type: ignore
 
 from ..firmware import cwlite as fw_cwlite
 from ..firmware import cw1200 as fw_cw1200
@@ -49,6 +50,7 @@ SAM_FW_FEATURES = [
     "FPGA_TARGET_BULK_WRITE", #12
     "MPSSE", #13
     "TARGET_SPI", #14
+    "MPSSE_ENABLED", #15
 ]
 
 class CWFirmwareError(Exception):
@@ -62,8 +64,9 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[4]: '0.30.0',
         SAM_FW_FEATURES[6]: '0.50.0',
         SAM_FW_FEATURES[7]: '0.50.0',
-        SAM_FW_FEATURES[8]: '0.30.0',
-        SAM_FW_FEATURES[13]: '0.60.0'
+        SAM_FW_FEATURES[8]: '0.23.0',
+        SAM_FW_FEATURES[13]: '0.60.0',
+        SAM_FW_FEATURES[15]: '0.62.0',
     },
 
     0xACE2: {
@@ -78,7 +81,8 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[8]: '0.30.0',
         SAM_FW_FEATURES[9]: '0.52.0',
         SAM_FW_FEATURES[13]: '0.60.0',
-        SAM_FW_FEATURES[14]: '0.60.0'
+        SAM_FW_FEATURES[14]: '0.60.0',
+        SAM_FW_FEATURES[15]: '0.62.0',
     },
 
     0xACE3: {
@@ -93,13 +97,14 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[8]: '1.30.0',
         SAM_FW_FEATURES[9]: '1.52.0',
         SAM_FW_FEATURES[13]: '1.60.0',
-        SAM_FW_FEATURES[14]: '1.60.0'
+        SAM_FW_FEATURES[14]: '1.60.0',
+        SAM_FW_FEATURES[15]: '1.62.0',
     },
 
     0xACE5: {
         SAM_FW_FEATURES[0]: '1.0.0',
         SAM_FW_FEATURES[1]: '1.0.0',
-        SAM_FW_FEATURES[2]: '1.0.0',
+        SAM_FW_FEATURES[2]: '1.1.0',
         SAM_FW_FEATURES[3]: '1.0.0',
         SAM_FW_FEATURES[4]: '1.0.0',
         SAM_FW_FEATURES[5]: '1.0.0',
@@ -108,7 +113,8 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[8]: '1.0.0',
         SAM_FW_FEATURES[9]: '1.0.0',
         SAM_FW_FEATURES[13]: '1.1.0',
-        SAM_FW_FEATURES[14]: '1.1.0'
+        SAM_FW_FEATURES[14]: '1.1.0',
+        SAM_FW_FEATURES[15]: '1.3.0',
     },
 
     0xC305: {
@@ -140,6 +146,9 @@ SAM_FW_FEATURE_BY_DEVICE = {
 }
 
 def _check_sam_feature(feature, fw_version, prod_id):
+    if prod_id not in SAM_FW_FEATURE_BY_DEVICE:
+        naeusb_logger.info("Features for ProdID {:04X} not stored, skipping...".format(prod_id))
+        return
     if feature not in SAM_FW_FEATURES:
         raise ValueError("Unknown feature {}".format(feature))
     feature_set = SAM_FW_FEATURE_BY_DEVICE[prod_id]
@@ -162,7 +171,7 @@ def _WINDOWS_USB_CHECK_DRIVER(device) -> Optional[str]:
     """
     try:
         import winreg
-        keyhandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM")
+        keyhandle = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM") # type: ignore
         subkey = r"ControlSet001\Enum\USB"
         subkey += "\\VID_{:04X}&PID_{:04X}".format(device.getVendorID(), device.getProductID())
 
@@ -173,7 +182,7 @@ def _WINDOWS_USB_CHECK_DRIVER(device) -> Optional[str]:
                 myenum = None
                 naeusb_logger.debug('Looking for {}...'.format(name))
                 while enum_name != name:
-                    myenum = winreg.EnumValue(handle, cnt)
+                    myenum = winreg.EnumValue(handle, cnt) # type: ignore
                     enum_name = myenum[0]
                     cnt += 1
                     naeusb_logger.debug('Found {}'.format(enum_name))
@@ -183,7 +192,7 @@ def _WINDOWS_USB_CHECK_DRIVER(device) -> Optional[str]:
 
         # get devices with same PID/VID
         try:
-            keyhandle_device = winreg.OpenKey(keyhandle, subkey)
+            keyhandle_device = winreg.OpenKey(keyhandle, subkey) # type: ignore
         except Exception as e:
             naeusb_logger.info("Could not get keyhandle device " + str(e))
             return None
@@ -195,12 +204,12 @@ def _WINDOWS_USB_CHECK_DRIVER(device) -> Optional[str]:
         # get devices that are connected and have the same port number
         while (address != device.getPortNumber()) or (attached is False):
             try:
-                sn = winreg.EnumKey(keyhandle_device, i)
+                sn = winreg.EnumKey(keyhandle_device, i) # type: ignore
             except Exception as e:
                 naeusb_logger.info("Could not get sn " + str(e)) 
                 return None
             # print("sn: " + sn)
-            keyhandle_sn = winreg.OpenKey(keyhandle_device, sn)
+            keyhandle_sn = winreg.OpenKey(keyhandle_device, sn) # type: ignore
             with keyhandle_sn as h:
                 address = get_enum_by_name(h, "Address")
                 if address is None:
@@ -211,7 +220,7 @@ def _WINDOWS_USB_CHECK_DRIVER(device) -> Optional[str]:
                 # now we need to figure out if this device is attached
                 # Windows really doesn't make this easy...
                 try:
-                    keyhandle_driver = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\{}\\Enum".format(service))
+                    keyhandle_driver = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\{}\\Enum".format(service)) # type: ignore
                 except Exception as e:
                     naeusb_logger.info("Could not get keyhandle driver " + str(e))
                     return None
@@ -227,7 +236,7 @@ def _WINDOWS_USB_CHECK_DRIVER(device) -> Optional[str]:
                 keyhandle_driver.Close()
                 i += 1
         try:
-            keyhandle_sn = winreg.OpenKey(keyhandle_device, sn)
+            keyhandle_sn = winreg.OpenKey(keyhandle_device, sn) # type: ignore
         except Exception as e:
             naeusb_logger.debug("Could not get keyhandle sn " + str(e))
             return None
@@ -609,6 +618,13 @@ class NAEUSB:
         else:
             return [0, 0, 0, 0]
 
+    def is_MPSSE_enabled(self):
+        if self.check_feature("MPSSE_ENABLED"):
+            return self.readCtrl(0x22, 0x42, 1)[0] == 0x01
+
+    def hw_location(self):
+        return (self.usbtx.device.getBusNumber(), self.usbtx.device.getDeviceAddress())
+
     def enable_MPSSE(self):
         if self.check_feature("MPSSE", True):
             try:
@@ -680,9 +696,9 @@ class NAEUSB:
 
         latest = fwver[0] > fw_latest[0] or (fwver[0] == fw_latest[0] and fwver[1] >= fw_latest[1])
         if not latest:
-            naeusb_logger.warning('Your firmware is outdated - latest is %d.%d' % (fw_latest[0], fw_latest[1]) +
-                             '. Suggested to update firmware, as you may experience errors' +
-                             '\nSee https://chipwhisperer.readthedocs.io/en/latest/api.html#firmware-update')
+            naeusb_logger.warning('Your firmware (%d.%d) is outdated - latest is %d.%d' 
+                             % (fwver[0], fwver[1], fw_latest[0], fw_latest[1]) +
+                             'See https://chipwhisperer.readthedocs.io/en/latest/firmware.html for more information')
 
         return self.usbtx.pid
 
