@@ -615,20 +615,10 @@ class SimpleSerial2(TargetTemplate):
             self.flush()
             time.sleep(0.05)
 
-    def write(self, data, timeout=0):
-        """ Writes data to the target over serial.
-
-        Args:
-            data (str): Data to write over serial.
-            timeout (float or None): Wait <timeout> seconds for write buffer to clear.
-                If None, block for a long time. If 0, return immediately. Defaults to 0.
-
-        Raises:
-            Warning: Target not connected
-        """
+    def write(self, data):
         if type(data) is list:
             data = bytearray(data)
-        self.ser.write(data, timeout)
+        self.ser.write(data)
 
     @property
     def baud(self):
