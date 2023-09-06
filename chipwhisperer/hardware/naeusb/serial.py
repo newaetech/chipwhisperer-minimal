@@ -28,9 +28,6 @@ import os
 from ...logging import *
 from ...common.utils import util
 from .naeusb import NAEUSB, NAEUSB_CTRL_IO_MAX
-
-SERIAL_MAX_WRITE = 58
-
 class USART(object):
     """
     USART Class communicates with NewAE USB Interface to read/write data over control endpoint.
@@ -131,7 +128,7 @@ class USART(object):
             # and overrun the internal buffer...
             # Can probably elimiate some USB communication
             # to make this faster, but okay for now...
-            wlen = SERIAL_MAX_WRITE
+            wlen = 58#NAEUSB_CTRL_IO_MAX
             if self.tx_buf_in_wait:
                 wlen -= self.in_waiting_tx()
                 if wlen < 1:
