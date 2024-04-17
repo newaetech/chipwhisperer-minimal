@@ -55,8 +55,7 @@ SAM_FW_FEATURES = [
     "MPSSE_ENABLED", #15
     "HUSKY_PIN_CONTROL", #16
     "NANO_CLOCK_RESET", #17
-    "SAM_ERR_LED", #18
-    "XON_XOFF", #19
+    "SAM_ERR_LED" #18
 ]
 
 class CWFirmwareError(Exception):
@@ -152,8 +151,7 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[10]: '1.0.0',
         SAM_FW_FEATURES[11]: '1.0.0',
         SAM_FW_FEATURES[12]: '1.1.0',
-        SAM_FW_FEATURES[13]: '1.2.0',
-        SAM_FW_FEATURES[19]: '1.4.0',
+        SAM_FW_FEATURES[13]: '1.2.0'
     },
     
     0xC340: {
