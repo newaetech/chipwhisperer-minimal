@@ -705,40 +705,6 @@ class SimpleSerial2(TargetTemplate):
         """
         return self.ser.inWaitingTX()
 
-    @property
-    def xonxoff(self):
-        # TODO: check version to make sure fw has this
-        return self.ser.xonxoff
-    
-    @xonxoff.setter
-    def xonxoff(self, enable):
-        self.ser.xonxoff = enable
-
-    @property
-    def currently_xoff(self):
-        return self.ser.currently_xoff
-
-    def __repr__(self):
-        ret = "SimpleSerial Settings ="
-        for line in dict_to_str(self._dict_repr()).split("\n"):
-            ret += "\n\t" + line
-        return ret
-
-    def __str__(self):
-        return self.__repr__()
-
-    def _dict_repr(self):
-        rtn = OrderedDict()
-        rtn['output_len'] = self.output_len
-
-        rtn['baud']     = self.baud
-        rtn['simpleserial_last_read'] = self.simpleserial_last_read
-        rtn['simpleserial_last_sent'] = self.simpleserial_last_sent
-        rtn['xonxoff'] = self.xonxoff
-        rtn['currently_xoff'] = self.currently_xoff
-        #rtn['protver'] = self.protver
-        return rtn
-
 class SimpleSerial2_CDC(SimpleSerial2):
     """Target Option for Using SSV2 with a CDC Port
 
@@ -770,7 +736,7 @@ class SimpleSerial2_CDC(SimpleSerial2):
     def close(self):
         self.ser.close()
 
-    def con(self, scope, dev_path=None, interface=None, flush_on_err=True):
+    def con(self, scope, dev_path=None, interface=None, flush_on_err=True, **kwargs):
         import serial # type: ignore
         self._flush_on_err = flush_on_err
         if dev_path is None:
