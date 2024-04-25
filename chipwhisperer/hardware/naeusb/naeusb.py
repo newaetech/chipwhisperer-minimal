@@ -22,6 +22,7 @@ import math
 from threading import Thread
 import usb1  # type: ignore
 import os
+import sys
 import array
 from typing import Optional, Union, List, Tuple, Dict, cast
 from ...common.utils import util
@@ -54,7 +55,8 @@ SAM_FW_FEATURES = [
     "MPSSE_ENABLED", #15
     "HUSKY_PIN_CONTROL", #16
     "NANO_CLOCK_RESET", #17
-    "SAM_ERR_LED" #18
+    "SAM_ERR_LED", #18
+    "XON_XOFF", #19
 ]
 
 class CWFirmwareError(Exception):
@@ -150,7 +152,8 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[10]: '1.0.0',
         SAM_FW_FEATURES[11]: '1.0.0',
         SAM_FW_FEATURES[12]: '1.1.0',
-        SAM_FW_FEATURES[13]: '1.2.0'
+        SAM_FW_FEATURES[13]: '1.2.0',
+        SAM_FW_FEATURES[19]: '1.4.0',
     },
     
     0xC340: {
@@ -431,9 +434,8 @@ class NAEUSB_Backend:
                 naeusb_logger.error("Or that you have the proper permissions to access it")
             raise
         self._usbdev = self.handle
-
-        # claim bulk interface, may not be necessary?
-        self.handle.claimInterface(0)
+        if os.name == "nt" or sys.platform == "darwin":
+            self.handle.claimInterface(0)
 
         self.sn = self.handle.getSerialNumber()
         self.pid = self.device.getProductID()
