@@ -44,7 +44,6 @@ class USART(object):
     USART_CMD_DISABLE = 0x0012
     USART_CMD_NUMWAIT = 0x0014
     USART_CMD_NUMWAIT_TX = 0x0018
-    USART_CMD_XONXOFF = 0x0020
 
     def __init__(self, usb, timeout=200, usart_num=0):
         """
@@ -75,40 +74,27 @@ class USART(object):
         self._stopbits = stopbits
         self._parity = parity
 
-        valid_stopbits = [1, 1.5, 2]
-        valid_parity = ["none", "odd", "even", "mark", "space"]
-        try:
-            stopbits = valid_stopbits.index(stopbits)
-        except ValueError:
-            raise ValueError("Invalid stop-bit {}, must be one of {}".format(stopbits, valid_stopbits))
+        if stopbits == 1:
+            stopbits = 0
+        elif stopbits == 1.5:
+            stopbits = 1
+        elif stopbits == 2:
+            stopbits = 2
+        else:
+            raise ValueError("Invalid stop-bit spec: %s" % str(stopbits))
 
-        try:
-            parity = valid_parity.index(parity)
-        except ValueError:
-            raise ValueError("Invalid parity {}, must be one of {}".format(parity, valid_parity))
-            
-
-        # if stopbits == 1:
-        #     stopbits = 0
-        # elif stopbits == 1.5:
-        #     stopbits = 1
-        # elif stopbits == 2:
-        #     stopbits = 2
-        # else:
-        #     raise ValueError("Invalid stop-bit spec: %s" % str(stopbits))
-
-        # if parity == "none":
-        #     parity = 0
-        # elif parity == "odd":
-        #     parity = 1
-        # elif parity == "even":
-        #     parity = 2
-        # elif parity == "mark":
-        #     parity = 3
-        # elif parity == "space":
-        #     parity = 4
-        # else:
-        #     raise ValueError("Invalid parity spec: %s" % str(parity))
+        if parity == "none":
+            parity = 0
+        elif parity == "odd":
+            parity = 1
+        elif parity == "even":
+            parity = 2
+        elif parity == "mark":
+            parity = 3
+        elif parity == "space":
+            parity = 4
+        else:
+            raise ValueError("Invalid parity spec: %s" % str(parity))
 
         cmdbuf = bytearray(7)
         util.pack_u32_into(cmdbuf, 0, int(baud))
@@ -280,22 +266,3 @@ class USART(object):
         if not self.fw_read:
             self.fw_read = self._usb.readFwVersion()
         return "{}.{}.{}".format(self.fw_read[0], self.fw_read[1], self.fw_read[2])
-
-    @property
-    def xonxoff(self):
-        # TODO: check version to make sure fw has this
-        if self._usb.check_feature("XON_XOFF"):
-            return self._usartRxCmd(self.USART_CMD_XONXOFF)[0] & 0x01
-        return None
-    
-    @xonxoff.setter
-    def xonxoff(self, enable):
-        if self._usb.check_feature("XON_XOFF"):
-            enable = 1 if enable else 0
-            self._usartTxCmd(self.USART_CMD_XONXOFF, [enable])
-
-    @property
-    def currently_xoff(self):
-        if self._usb.check_feature("XON_XOFF"):
-            return self._usartRxCmd(self.USART_CMD_XONXOFF)[0] & 0x02
-        return None
