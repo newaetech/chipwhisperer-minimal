@@ -178,8 +178,8 @@ class SAMFWLoader:
         if fw_path:
             if not os.path.exists(fw_path):
                 raise OSError("File {} does not exist. Firmware has not been erased.".format(fw_path))
-        if (not self._hw_type) and (not fw_path):
-            raise OSError("Unable to detect chipwhisperer hardware type and firmware not specified")
+        if not self._hw_type:
+            raise OSError("Unable to detect chipwhisperer hardware type")
         before = serial.tools.list_ports.comports()
         before = get_at91_ports()
         # time.sleep(0.5)
@@ -219,12 +219,9 @@ class SAMFWLoader:
             'cwlite',
             'cwnano',
             'cw305',
-            'cw310',
-            'cw340',
             'cw1200',
             'cwbergen',
-            'cwhusky',
-            'cwhuskyplus'
+            'cwhusky'
         ]
 
 
@@ -244,10 +241,26 @@ class SAMFWLoader:
                 message = 'Invalid hardware type {}, needs to be one of: ({})'
                 raise TypeError(message.format(hardware_type, ', '.join(type_whitelist)))
             else:
-                from ....hardware.firmware.open_fw import mcufw
+                if hardware_type == 'cwlite':
+                    from ....hardware.firmware.cwlite import getsome
+                    name = 'SAM3U_CW1173.bin'
+                elif hardware_type == 'cwnano':
+                    from ....hardware.firmware.cwnano import getsome
+                    name = 'SAM3U_CWNANO.bin'
+                elif hardware_type == 'cw305':
+                    from ....hardware.firmware.cw305 import getsome
+                    name = 'SAM3U_CW305.bin'
+                elif hardware_type == 'cw1200':
+                    from ....hardware.firmware.cw1200 import getsome
+                    name = 'CW1200_SAM3UFW.bin'
+                elif hardware_type == 'cwbergen':
+                    from ....hardware.firmware.cwbergen import getsome
+                    name = 'CW310.bin'
+                elif hardware_type == 'cwhusky':
+                    from ....hardware.firmware.cwhusky import getsome
+                    name = 'Husky.bin'
                 self.logfunc('Loading {} firmware...'.format(hardware_type))
-                fw_data = mcufw(hardware_type, False)
-                name = "{}/mcufw.bin".format(hardware_type)
+                fw_data = getsome(name).read()
 
         if fw_path:
             self.logfunc("Opening firmware...")

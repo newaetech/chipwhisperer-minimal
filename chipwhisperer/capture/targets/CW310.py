@@ -70,13 +70,14 @@ class CW310(CW305):
         import chipwhisperer as cw
         self._naeusb = NAEUSB()
         self.pll = PLLCDCE906(self._naeusb, ref_freq = 12.0E6, board="CW310")
+        self.fpga = FPGA(self._naeusb)
 
         self.hw = None
         self.oa = None
 
         self._woffset_sam3U = 0x000
-        self.default_verilog_defines = 'cw305_aes_defines.v'
-        self.default_verilog_defines_full_path = os.path.dirname(cw.__file__) +  '/../../firmware/fpgas/aes/hdl/' + self.default_verilog_defines
+        self.default_verilog_defines = 'cw305_defines.v'
+        self.default_verilog_defines_full_path = os.path.dirname(cw.__file__) +  '/../../hardware/victims/cw305_artixtarget/fpga/common/' + self.default_verilog_defines
         self.registers = 12 # number of registers we expect to find
         self.bytecount_size = 7 # pBYTECNT_SIZE in Verilog
 
@@ -85,8 +86,6 @@ class CW310(CW305):
         self.last_key = bytearray([0]*16)
         self.target_name = 'AES'
         self._io = FPGAIO(self._naeusb, 200)
-        self.toggle_user_led = False
-        self.check_done = False
 
         # TODO- temporary until these are added to the parsed defines file
         self.REG_XADC_DRP_ADDR = 0x17
@@ -130,16 +129,12 @@ class CW310(CW305):
         else:
             raise ValueError("Invalid usart {}".format(num))
 
-    def _get_fpga_programmer(self):
-        return self.fpga
-
     def _con(self, scope=None, bsfile=None, force=False, fpga_id=None, defines_files=None, slurp=True, prog_speed=20E6, sn=None, hw_location=None, platform='cw310'):
         # add more stuff later
         self.platform = platform
         self._naeusb.con(idProduct=[0xC310], serial_number=sn, hw_location=hw_location)
         self._usart0 = USART(self._naeusb, usart_num=0)
         self._usart1 = USART(self._naeusb, usart_num=1)
-        self.fpga = FPGA(self._naeusb)
         self.pll.cdce906init()
         if fpga_id:
             target_logger.warning("fpga_id is currently unused")
@@ -148,8 +143,8 @@ class CW310(CW305):
             if fpga_id is None:
                 verilog_defines = [self.default_verilog_defines_full_path]
             else:
-                from ...hardware.firmware.open_fw import registers
-                verilog_defines = [registers("cw305")]
+                from ...hardware.firmware.cw305 import getsome
+                verilog_defines = [getsome(self.default_verilog_defines)]
         else:
             verilog_defines = defines_files
         if slurp:

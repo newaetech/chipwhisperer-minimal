@@ -32,7 +32,7 @@ import time
 from functools import wraps
 import warnings
 from ...logging import *
-from typing import List, Union, Type
+from typing import List
 
 BYTE_ARRAY_TYPES = (bytes, bytearray, memoryview)
 
@@ -147,9 +147,6 @@ def bytearray2binarylist(bytes, nrBits=8):
     for byte in bytes:
         init = np.concatenate((init, np.unpackbits(np.uint8(byte))[8 - nrBits:]), axis=0)
     return init
-
-def unpack_u16(buf, i : int):
-    return (buf[i + 1] << 8) | buf[i]
 
 def pack_u16_into(buf, i : int, value : int):
     """Packs a little endian 16 bit integer into a buffer."""
@@ -559,27 +556,27 @@ def camel_case_deprecated(func):
     return wrapper
 
 
-def get_cw_type(sn=None, idProduct=None, hw_location=None, **kwargs):
+
+def get_cw_type(sn=None, idProduct=None, hw_location=None, **kwargs) -> type:
     """ Gets the scope type of the connected ChipWhisperer
     If multiple connected, sn must be specified
     """
-    from ...hardware.naeusb.naeusb import NAEUSB, NAEUSB_Backend
-    from ...capture import scopes
-    # from chipwhisperer.capture import scopes
+    from chipwhisperer.hardware.naeusb.naeusb import NAEUSB, NAEUSB_Backend
+    from chipwhisperer.capture import scopes
     # from ...capture.scopes import ScopeTypes
     # todo: pyusb as well
 
     if idProduct:
         possible_ids = [idProduct]
     else:
-        possible_ids = [0xace0, 0xace2, 0xace3, 0xace5, 0xace6]
+        possible_ids = [0xace0, 0xace2, 0xace3, 0xace5]
 
     cwusb = NAEUSB_Backend()
     device = cwusb.find(serial_number=sn, idProduct=possible_ids, hw_location=hw_location)
     name = device.getProduct()
     cwusb.usb_ctx.close()
 
-    if (name == "ChipWhisperer Lite") or (name == "ChipWhisperer CW1200") or (name == "ChipWhisperer Husky") or (name == "ChipWhisperer Husky Plus"):
+    if (name == "ChipWhisperer Lite") or (name == "ChipWhisperer CW1200") or (name == "ChipWhisperer Husky"):
         return scopes.OpenADC
     elif name == "ChipWhisperer Nano":
         return scopes.CWNano
