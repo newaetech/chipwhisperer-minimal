@@ -34,8 +34,6 @@ from ..firmware import cw305  as fw_cw305
 from ..firmware import cwnano  as fw_nano
 from ..firmware import cwhusky as fw_cwhusky
 
-from ..firmware.open_fw import fwver
-
 from ...logging import *
 
 SAM_FW_FEATURES = [
@@ -57,8 +55,7 @@ SAM_FW_FEATURES = [
     "MPSSE_ENABLED", #15
     "HUSKY_PIN_CONTROL", #16
     "NANO_CLOCK_RESET", #17
-    "SAM_ERR_LED", #18
-    "XON_XOFF", #19
+    "SAM_ERR_LED" #18
 ]
 
 class CWFirmwareError(Exception):
@@ -130,24 +127,6 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[18]: '1.5.0',
     },
 
-    0xACE6: {
-        SAM_FW_FEATURES[0]: '1.0.0',
-        SAM_FW_FEATURES[1]: '1.0.0',
-        SAM_FW_FEATURES[2]: '1.1.0',
-        SAM_FW_FEATURES[3]: '1.0.0',
-        SAM_FW_FEATURES[4]: '1.0.0',
-        SAM_FW_FEATURES[5]: '1.0.0',
-        SAM_FW_FEATURES[6]: '1.0.0',
-        SAM_FW_FEATURES[7]: '1.0.0',
-        SAM_FW_FEATURES[8]: '1.0.0',
-        SAM_FW_FEATURES[9]: '1.0.0',
-        SAM_FW_FEATURES[13]: '1.0.0',
-        SAM_FW_FEATURES[14]: '1.0.0',
-        SAM_FW_FEATURES[15]: '1.0.0',
-        SAM_FW_FEATURES[16]: '1.0.0',
-        SAM_FW_FEATURES[18]: '1.0.0',
-    },
-
     0xC305: {
         SAM_FW_FEATURES[0]: '0.32.0',
         SAM_FW_FEATURES[2]: '0.52.0',
@@ -172,8 +151,7 @@ SAM_FW_FEATURE_BY_DEVICE = {
         SAM_FW_FEATURES[10]: '1.0.0',
         SAM_FW_FEATURES[11]: '1.0.0',
         SAM_FW_FEATURES[12]: '1.1.0',
-        SAM_FW_FEATURES[13]: '1.2.0',
-        SAM_FW_FEATURES[19]: '1.4.0',
+        SAM_FW_FEATURES[13]: '1.2.0'
     },
     
     0xC340: {
@@ -355,14 +333,11 @@ NAEUSB_CTRL_IO_THRESHOLD = 48
 #List of all NewAE PID's
 NEWAE_VID = 0x2B3E
 NEWAE_PIDS = {
-    0xACE2: {'name': "ChipWhisperer-Lite",     'fwver': fwver("cwlite")},
-    0xACE3: {'name': "ChipWhisperer-CW1200",   'fwver': fwver("cw1200")},
-    0xC305: {'name': "CW305 Artix FPGA Board", 'fwver': fwver("cw305")},
-    0xC310: {'name': "CW305 Artix FPGA Board", 'fwver': fwver("cwbergen")},
-    0xC340: {'name': "CW305 Artix FPGA Board", 'fwver': fwver("cwluna")},
-    0xACE0: {'name': "ChipWhisperer-Nano", 'fwver': fwver("cwnano")},
-    0xACE5: {'name': "ChipWhisperer-Husky",   'fwver': fwver("cwhusky")},
-    0xACE6: {'name': "ChipWhisperer-Husky-Plus",   'fwver': fwver("cwhuskyplus")},
+    0xACE2: {'name': "ChipWhisperer-Lite",     'fwver': fw_cwlite.fwver},
+    0xACE3: {'name': "ChipWhisperer-CW1200",   'fwver': fw_cw1200.fwver},
+    0xC305: {'name': "CW305 Artix FPGA Board", 'fwver': fw_cw305.fwver},
+    0xACE0: {'name': "ChipWhisperer-Nano", 'fwver': fw_nano.fwver},
+    0xACE5: {'name': "ChipWhisperer-Husky",   'fwver': fw_cwhusky.fwver},
     0xC521: {'name': "CW521 Ballistic-Gel",   'fwver': None},
     0xC610: {'name': "PhyWhisperer-USB",   'fwver': None},
 }
@@ -465,7 +440,7 @@ class NAEUSB_Backend:
         naeusb_logger.debug('Found %s, Serial Number = %s' % (self.handle.getProduct(), self.sn))
 
         # Husky has different endpoints for faster transfer
-        if (self.device.getProductID() == 0xace5) or (self.device.getProductID() == 0xace6):
+        if self.device.getProductID() == 0xace5:
             naeusb_logger.debug("Husky found, using new endpoints")
             self.rep = 0x85
             self.wep = 0x06
@@ -808,22 +783,22 @@ class NAEUSB:
 
 
         self.snum=self.usbtx.sn
-        fwverraw = self.readFwVersion()
-        fwver = "{}.{}.{}".format(fwverraw[0], fwverraw[1], fwverraw[2])
-        naeusb_logger.info('SAM3U Firmware version = {}'.format(fwver))
+        fwver = self.readFwVersion()
+        naeusb_logger.info('SAM3U Firmware version = %d.%d b%d' % (fwver[0], fwver[1], fwver[2]))
 
 
-        fw_latest : str = "0.0"
+        fw_latest : List[int] = [0, 0]
 
         if self.usbtx.pid in NEWAE_PIDS:
             name = NEWAE_PIDS[self.usbtx.pid]['name'] # type: ignore
-            fw_latest = NEWAE_PIDS[self.usbtx.pid]['fwver'] # type: ignore
+            fw_latest = cast(List[int], NEWAE_PIDS[self.usbtx.pid]['fwver']) # type: ignore
         else:
             name = "Unknown (PID = %04x)"%self.usbtx.pid
 
-        latest = fwver >= fw_latest
+        latest = fwver[0] > fw_latest[0] or (fwver[0] == fw_latest[0] and fwver[1] >= fw_latest[1])
         if not latest:
-            naeusb_logger.warning('Your firmware ({}) is outdated - latest is {}'.format(fwver, fw_latest) +
+            naeusb_logger.warning('Your firmware (%d.%d) is outdated - latest is %d.%d' 
+                             % (fwver[0], fwver[1], fw_latest[0], fw_latest[1]) +
                              ' See https://chipwhisperer.readthedocs.io/en/latest/firmware.html for more information')
 
         return self.usbtx.pid
