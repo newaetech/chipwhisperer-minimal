@@ -28,19 +28,21 @@ import time
 
 class SimpleSerialTemplate:
 
-    """
-    SimpleSerial serial reader base class.
+    """ SimpleSerial serial reader base class.
 
     All SimpleSerial readers have two data buffers:
+
     1. A buffer for received data to go to the SimpleSerial target module. This buffer contains bytes.
     2. A buffer for sent and received data to go to the serial terminal. This buffer contains ['in'/'out', char] pairs.
+
     These two structures are queues with a fixed maximum size: when they overflow, the oldest data must be removed
     from the queues.
 
     Note that child classes should only need to implement the following:
-    - hw_read()
-    - hw_write()
-    - hw_in_waiting()
+
+    * hw_read()
+    * hw_write()
+    * hw_in_waiting()
     """
 
     _name= 'Simple Serial Reader'
@@ -63,11 +65,11 @@ class SimpleSerialTemplate:
         pass
 
     def con(self, scope=None):
-        """Connect to target"""
+        """Connect to target."""
         self.connectStatus = True
 
     def dis(self):
-        """Disconnect from target"""
+        """Disconnect from target."""
         self.close()
         self.connectStatus = False
 
@@ -79,6 +81,7 @@ class SimpleSerialTemplate:
         Write a string to the device.
 
         This involves 2 actions:
+
         1. Write the string to the hardware;
         2. Insert ['out', b] pairs into the terminal queue
 
@@ -116,6 +119,7 @@ class SimpleSerialTemplate:
         Attempt to read a string from the device.
 
         This involves three steps:
+
         1. Remove existing data from the target buffer
         2. If needed, request more data from the hardware
         3. If any, add received data to terminal queue in ['in', b] pairs
@@ -205,9 +209,11 @@ class SimpleSerialTemplate:
         Attempt to read a bytestring from the device.
 
         This involves three steps:
+
         1. Remove existing data from the terminal buffer
         2. If needed, request more data from the hardware
         3. If any, add received data to target queue
+
         This is the interface for the ChipWhisperer terminal - it places the received bytes in a target buffer.
 
         Args:

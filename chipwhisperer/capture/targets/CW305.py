@@ -110,7 +110,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
 
     For more help about CW305 settings, try help() on this CW305 submodule:
 
-       * target.pll
+    * target.pll
     """
 
 
@@ -287,7 +287,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
 
 
     def fpga_write(self, addr, data):
-        """Write to an address on the FPGA
+        """Write to an address on the FPGA.
 
         Args:
             addr (int): Address to write to
@@ -307,7 +307,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
 
 
     def fpga_read(self, addr, readlen):
-        """Read from an address on the FPGA
+        """Read from an address on the FPGA.
 
         Args:
             addr (int): Address to read from
@@ -406,12 +406,12 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
             raise IOError("VCC-INT Write Error, response = %d" % resp[0])
 
     def is_programmed(self):
-        """Is FPGA programmed
+        """Is FPGA programmed.
 
         Returns:
-            True if the FPGA is programmed, otherwise False
+            True if the FPGA is programmed, otherwise False.
             
-        .. warning:: This function may erroneously return True if the FPGA is not powered
+        .. warning:: This function may erroneously return True if the FPGA is not powered.
         """
         try:
             return (self.fpga.isFPGAProgrammed() == True)
@@ -419,12 +419,12 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
             return False
 
     def INITB_state(self):
-        """Returns the state of the FPGA's INITB pin
+        """Returns the state of the FPGA's INITB pin.
 
-        The INITB is high when the FPGA is programmed, and low when it is not
+        The INITB is high when the FPGA is programmed, and low when it is not.
 
         Returns:
-            True if the INITB is high, False if INITB is low, None if the result is invalid
+            True if the INITB is high, False if INITB is low, None if the result is invalid.
         """
         try:
             return self.fpga.INITBState() 
@@ -510,7 +510,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
                     target_logger.warning(("FPGA Bitstream not configured or '%s' not a file." % str(bsfile)))
                 else:
                     starttime = datetime.now()
-                    status = self.fpga.FPGAProgram(bsfile, exceptOnDoneFailure=False, prog_speed=prog_speed)
+                    status = self.fpga.FPGAProgram(open(bsfile, "rb"), exceptOnDoneFailure=False, prog_speed=prog_speed)
                     stoptime = datetime.now()
                     if status:
                         target_logger.info('FPGA Config OK, time: %s' % str(stoptime - starttime))
@@ -601,11 +601,11 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
             self.ss2.ser.close()
 
     def checkEncryptionKey(self, key):
-        """Validate encryption key"""
+        """Validate encryption key."""
         return key
 
     def loadEncryptionKey(self, key):
-        """Write encryption key to FPGA"""
+        """Write encryption key to FPGA."""
         if self.REG_CRYPT_KEY is None:
             target_logger.error("target.REG_CRYPT_KEY unset. Have you given target a verilog defines file?")
             return
@@ -614,7 +614,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
         self.fpga_write(self.REG_CRYPT_KEY, key)
 
     def loadInput(self, inputtext):
-        """Write input to FPGA"""
+        """Write input to FPGA."""
         if self.REG_CRYPT_TEXTIN is None:
             target_logger.error("target.REG_CRYPT_TEXTIN unset. Have you given target a verilog defines file?")
             return
@@ -623,7 +623,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
         self.fpga_write(self.REG_CRYPT_TEXTIN, text)
 
     def is_done(self):
-        """Check if FPGA is done"""
+        """Check if FPGA is done."""
         if self.check_done:
             if (self.REG_CRYPT_GO is None) or (self.REG_USER_LED is None):
                 target_logger.error("target.REG_CRYPT_GO or target.REG_USER_LED unset. Have you given target a verilog defines file?")
@@ -641,7 +641,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
     isDone = camel_case_deprecated(is_done)
 
     def readOutput(self):
-        """"Read output from FPGA"""
+        """Read output from FPGA."""
         if self.REG_CRYPT_CIPHEROUT is None:
             target_logger.error("target.REG_CRYPT_CIPHEROUT unset. Have you given target a verilog defines file?")
             return
@@ -775,7 +775,7 @@ class CW305(TargetTemplate, ChipWhispererCommonInterface):
 
     def batchRun(self,batchsize=1024,random_key=True,random_pt=True,seed=None):
         """
-            Run multiple encryptions on random data
+            Run multiple encryptions on random data.
 
             Args:
                 batchsize (int): The number of encryption to run (default 1024).
@@ -957,7 +957,7 @@ class FPGASPI:
         
         
     def enable_interface(self, enable):
-        """Enable or disable the SPI interface
+        """Enable or disable the SPI interface.
         
         Args:
             enable (bool): Enable (True) or disable (False) SPI interface
@@ -968,7 +968,7 @@ class FPGASPI:
             self.sendCtrl(self.REQ_FPGASPI_PROGRAM, 0xA1)
         
     def set_cs_pin(self, status):
-        """Set the SPI pin high or low
+        """Set the SPI pin high or low.
         
         Args:
             status (bool): Set CS pin high (True) or low (False)
@@ -979,7 +979,7 @@ class FPGASPI:
             self.sendCtrl(self.REQ_FPGASPI_PROGRAM, 0xA2)        
 
     def spi_tx_rx(self, data):
-        """Write up to 64 bytes of data to the SPI chip
+        """Write up to 64 bytes of data to the SPI chip.
         
         Args:
             data (list): Write data over the SPI interface
@@ -1007,7 +1007,7 @@ class FPGASPI:
         self.set_cs_pin(True)
             
     def erase_chip(self, timeout=None):
-        """Erase the whole SPI chip. Slow (~25s)
+        """Erase the whole SPI chip. Slow (~25s).
 
         Args:
             timeout (int): Timeout in ms. If None, set to 0xFFFFFFFF (approx 1000 hours)
@@ -1023,7 +1023,7 @@ class FPGASPI:
         self.wait_busy(timeout)
         
     def wait_busy(self, timeout=1000):
-        """Wait for the busy status on the FPGA to clear
+        """Wait for the busy status on the FPGA to clear.
         
         Args:
             timeout (int): Timeout in ms. If None, set to 0xFFFFFFFF (approx 1000 hours)
@@ -1046,9 +1046,7 @@ class FPGASPI:
         self.set_cs_pin(True)
         
     def cmd_write_mem(self, data, addr=0x000000, timeout=1000):
-        """Write up to a page of data
-        
-        For the default chip, a page is 256 bytes.
+        """Write up to a page of data. For the default chip, a page is 256 bytes.
 
         Args:
             data (list): Data to write
@@ -1082,9 +1080,7 @@ class FPGASPI:
         self.wait_busy(timeout)
         
     def cmd_read_mem(self, length, addr):
-        """Read up to a page of data
-        
-        For the default chip, a page is 256 bytes
+        """Read up to a page of data. For the default chip, a page is 256 bytes.
 
         Args:
             length (int): Length of data to read
@@ -1133,7 +1129,7 @@ class FPGASPI:
             self.verify(data, addr)
             
     def verify(self, data, addr=0x000000):
-        """Verify the data on the SPI chip
+        """Verify the data on the SPI chip.
         
         Args:
             data (list): data to verify
@@ -1153,7 +1149,7 @@ class FPGASPI:
             data_read += to_read
             
     def read(self, length, addr=0x000000):
-        """Read data on the SPI chip
+        """Read data on the SPI chip.
         
         Args:
             length (int): Length of data to read
@@ -1171,7 +1167,7 @@ class FPGASPI:
         return ret
         
     def erase_block(self, addr, size="4K", timeout=1000):
-        """Erase a block on the SPI chip. See spi.ERASE_BLOCK for available erase lengths
+        """Erase a block on the SPI chip. See spi.ERASE_BLOCK for available erase lengths.
         
         Args:
             addr (int): Address to erase from
@@ -1199,9 +1195,10 @@ class FPGAIO:
     such as the external IO interface, and basically anything else you can find.
     
     The pin names are strings, and come from one of three sources:
-        * SAM3U pin names, such as "PC11", "PB9", etc.
-        * Net names from the CW305 schematic such as "USB_A20".
-        * The FPGA ball location that is connected to the SAM3U pin, such as "M2".
+
+    * SAM3U pin names, such as "PC11", "PB9", etc.
+    * Net names from the CW305 schematic such as "USB_A20".
+    * The FPGA ball location that is connected to the SAM3U pin, such as "M2".
     
     Any function taking a pin name assumes you pass a string with one of those. You
     do not need to specify your source - it will autodetect the pin name (if possible).
@@ -1241,7 +1238,8 @@ class FPGAIO:
         response = io.spi1_transfer(somedata)
         print(response)
 
-    If you want to see all possible pin names, you can access them with:
+    If you want to see all possible pin names, you can access them with::
+
         io.SAM3U_PIN_NAMES.keys()
         io.SCHEMATIC_PIN_NAMES.keys()
         io.FPGA_PIN_NAMES.keys()

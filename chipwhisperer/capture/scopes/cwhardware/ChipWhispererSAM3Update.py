@@ -44,9 +44,9 @@ class SAMFWLoader:
 
     Autoprogram Example:
 
-     #. Attach the scope part of the hardware to your computer.
+    #. Attach the scope part of the hardware to your computer.
 
-     #. Connect to the scope using::
+    #. Connect to the scope using::
 
             import chipwhisperer as cw
 
@@ -104,7 +104,7 @@ class SAMFWLoader:
 
         Two methods:
 
-         #. Using the firmware_path::
+        #. Using the firmware_path::
 
                 # the firmware file is included with chipwhisperer
                 # and is the .bin file from the FW build
@@ -112,7 +112,7 @@ class SAMFWLoader:
                 # directory.
                 programmer.program(<port>, <path to firmware file>)
 
-         #. Using the hardware_type (recommended)::
+        #. Using the hardware_type (recommended)::
 
                 programmer.program(<port>, hardware_type='cwlite')
                 programmer.program(<port>, hardware_type='cwnano')

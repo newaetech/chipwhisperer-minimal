@@ -55,21 +55,21 @@ class SimpleSerial2(TargetTemplate):
     For more help, use the help() function with one of the submodules
     (target.baud, target.write, target.read, ...).
 
-      * :attr:`target.baud <.SimpleSerial2.baud>`
-      * :meth:`target.write <.SimpleSerial2.write>`
-      * :meth:`target.read <.SimpleSerial2.read>`
-      * :meth:`target.in_waiting <.SimpleSerial2.in_waiting>`
-      * :meth:`target.in_waiting_tx <.SimpleSerial2.in_waiting_tx>`
-      * :meth:`target.send_cmd <.SimpleSerial2.send_cmd>`
-      * :meth:`target.read_cmd <.SimpleSerial2.read_cmd>`
-      * :meth:`target.simpleserial_wait_ack <.SimpleSerial2.simpleserial_wait_ack>`
-      * :meth:`target.simpleserial_write <.SimpleSerial2.simpleserial_write>`
-      * :meth:`target.simpleserial_read <.SimpleSerial2.simpleserial_read>`
-      * :meth:`target.simpleserial_read_witherrors <.SimpleSerial2.simpleserial_read_witherrors>`
-      * :meth:`target.set_key <.SimpleSerial2.set_key>`
-      * :meth:`target.close <.SimpleSerial2.close>`
-      * :meth:`target.con <.SimpleSerial2.con>`
-      * :meth:`target.get_simpleserial_commands <.SimpleSerial2.get_simpleserial_commands>`
+    * :attr:`target.baud <.SimpleSerial2.baud>`
+    * :meth:`target.write <.SimpleSerial2.write>`
+    * :meth:`target.read <.SimpleSerial2.read>`
+    * :meth:`target.in_waiting <.SimpleSerial2.in_waiting>`
+    * :meth:`target.in_waiting_tx <.SimpleSerial2.in_waiting_tx>`
+    * :meth:`target.send_cmd <.SimpleSerial2.send_cmd>`
+    * :meth:`target.read_cmd <.SimpleSerial2.read_cmd>`
+    * :meth:`target.simpleserial_wait_ack <.SimpleSerial2.simpleserial_wait_ack>`
+    * :meth:`target.simpleserial_write <.SimpleSerial2.simpleserial_write>`
+    * :meth:`target.simpleserial_read <.SimpleSerial2.simpleserial_read>`
+    * :meth:`target.simpleserial_read_witherrors <.SimpleSerial2.simpleserial_read_witherrors>`
+    * :meth:`target.set_key <.SimpleSerial2.set_key>`
+    * :meth:`target.close <.SimpleSerial2.close>`
+    * :meth:`target.con <.SimpleSerial2.con>`
+    * :meth:`target.get_simpleserial_commands <.SimpleSerial2.get_simpleserial_commands>`
 
     The protocol is as follows:
 
@@ -90,12 +90,14 @@ class SimpleSerial2(TargetTemplate):
     Allows us to send more information in the same number of bytes. Also
     should be more robust and a bit easier to work with:
 
-    1. It's easy to reset communications by sending frame bytes (0x00)
-    2. We have many ways of checking the validity of a packet:
-        -Frame byte where it shouldn't be
-        -No frame byte at end of message
-        -CRC
-    3. No need to specify length of return message
+    #. It's easy to reset communications by sending frame bytes (0x00)
+    #. We have many ways of checking the validity of a packet:
+
+       * Frame byte where it shouldn't be
+       * No frame byte at end of message
+       * CRC
+
+    #. No need to specify length of return message
     """
     _frame_byte = 0x00
     def __init__(self):
@@ -307,10 +309,10 @@ class SimpleSerial2(TargetTemplate):
 
         The packet will be valid if:
 
-            * All requested reads return the requested characters
-            * No frame bytes except the terminator are read
-            * The packet doesn't end with a frame byte
-            * If an ack packet isn't received
+        * All requested reads return the requested characters
+        * No frame bytes except the terminator are read
+        * The packet doesn't end with a frame byte
+        * If an ack packet isn't received
 
         Args:
             cmd (str, optional): Expected start of the command. Will warn the user if
@@ -336,12 +338,14 @@ class SimpleSerial2(TargetTemplate):
                 rv: If 'ack' in command, includes return value
 
         Example:
-            Reading the output of one of the glitch tests when no error:
+            Reading the output of one of the glitch tests when no error::
+
                 resp = target.simpleserial_read_witherrors('r', 4)
                 print(resp)
                 >{'valid': True, 'payload': CWbytearray(b'c4 09 00 00'), 'full_response': 'rC4090000\n', 'rv': 0}
 
-            Reading the output of one of the glitch tests when an error happened:
+            Reading the output of one of the glitch tests when an error happened::
+
                 resp = target.simpleserial_read_witherrors('r', 4)
                 print(resp)
                 >{'valid': False, 'payload': None, 'full_response': '\x00\x00\x00\x00\x00\x00\x00rRESET   \n', 'rv': None}
@@ -770,7 +774,7 @@ class SimpleSerial2(TargetTemplate):
         return rtn
 
 class SimpleSerial2_CDC(SimpleSerial2):
-    """Target Option for Using SSV2 with a CDC Port
+    """Target Option for Using SSV2 with a CDC Port.
 
     .. versionadded:: 5.5
         Added CDC SSV2

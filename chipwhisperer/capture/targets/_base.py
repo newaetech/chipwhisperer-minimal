@@ -37,28 +37,28 @@ class TargetTemplate:
         return ""
 
     def setSomething(self):
-        """Here you would send value to the reader hardware"""
+        """Here you would send value to the reader hardware."""
         pass
 
     def _dis(self):
         pass
 
     def __del__(self):
-        """Close system if needed"""
+        """Close system if needed."""
         self.close()
 
     def getStatus(self):
         return self.connectStatus
 
     def dis(self):
-        """Disconnect from target"""
+        """Disconnect from target."""
         # self.close()
         self._dis()
         self.connectStatus = False
 
 
     def con(self, scope=None, **kwargs):
-        """Connect to target"""
+        """Connect to target."""
         # Programmer.lastFlashedFile = "unknown"
         try:
             self.connectStatus = True
@@ -70,7 +70,7 @@ class TargetTemplate:
 
     @property
     def output_len(self):
-        """The length of the output expected from the crypto algorithm (in bytes)"""
+        """The length of the output expected from the crypto algorithm (in bytes)."""
         return 16
 
     @output_len.setter
@@ -81,46 +81,46 @@ class TargetTemplate:
         raise NotImplementedError
 
     def flush(self):
-        """Flush input/output buffers"""
+        """Flush input/output buffers."""
         pass
 
     def close(self):
-        """Close target"""
+        """Close target."""
         pass
 
     def init(self):
-        """Init Hardware"""
+        """Init Hardware."""
         pass
 
     def reinit(self):
         pass
 
     def setModeEncrypt(self):
-        """Set hardware to do encryption, if supported"""
+        """Set hardware to do encryption, if supported."""
         pass
 
     def setModeDecrypt(self):
-        """Set hardware to do decryption, if supported"""
+        """Set hardware to do decryption, if supported."""
         pass
 
     def checkEncryptionKey(self, key):
-        """System 'suggests' encryption key, and target modifies it if required because e.g. hardware has fixed key"""
+        """System 'suggests' encryption key, and target modifies it if required because e.g. hardware has fixed key."""
         return key
 
     def checkPlaintext(self, text):
-        """System suggests plaintext; target modifies as required"""
+        """System suggests plaintext; target modifies as required."""
         return text
 
     def loadEncryptionKey(self, key):
-        """Load desired encryption key"""
+        """Load desired encryption key."""
         self.key = key
 
     def loadInput(self, inputtext):
-        """Load input plaintext"""
+        """Load input plaintext."""
         self.input = inputtext
 
     def isDone(self):
-        """If encryption takes some time after 'go' called, lets user poll if done"""
+        """If encryption takes some time after 'go' called, lets user poll if done."""
         return True
 
     def readOutput(self):

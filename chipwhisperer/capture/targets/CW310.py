@@ -47,7 +47,7 @@ class CW310(CW305):
     Inherits the CW305 object, so you can use the same methods as the CW305, provided the register interface
     in your FPGA build is the same.
 
-    You can also set the voltage and current settings for the USB-C Power port on the CW310
+    You can also set the voltage and current settings for the USB-C Power port on the CW310.::
 
         # set USB PDO 3 to 20V 5A
         target.usb_set_voltage(3, 20)
@@ -58,7 +58,7 @@ class CW310(CW305):
 
     For more help about CW310 settings, try help() on this CW310 submodule:
 
-       * target.pll
+    * target.pll
     """
     USB_I2C_SETUP = 0x43
     USB_I2C_DATA = 0x44
@@ -466,15 +466,15 @@ class CW310(CW305):
 
     @property
     def cdc_settings(self):
-        """Check or set whether USART settings can be changed via the USB CDC connection
+        """Check or set whether USART settings can be changed via the USB CDC connection,
+        i.e. whether you can change USART settings (baud rate, 8n1) via a serial client like PuTTY.
 
-        i.e. whether you can change USART settings (baud rate, 8n1) via a serial client like PuTTY
+        :getter: An array of length two for the two CDC ports.
 
-        :getter: An array of length two for the two CDC ports
+        :setter: Can set either via an integer (which sets both ports) or an array of length 2 (which sets each port).
 
-        :setter: Can set either via an integer (which sets both ports) or an array of length 2 (which sets each port)
-
-        Returns None if using firmware before the CDC port was added
+        Returns: 
+            None if using firmware before the CDC port was added.
         """
         rawver = self._naeusb.readFwVersion()
         ver = '{}.{}'.format(rawver[0], rawver[1])
