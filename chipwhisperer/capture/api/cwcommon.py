@@ -109,7 +109,7 @@ class ChipWhispererCommonInterface:
     def _getNAEUSB(self) -> NAEUSB:
         raise NotImplementedError("_getNAEUSB() method required")
 
-    def _getFWPy(self) -> List[int]:
+    def _getFWPy(self) -> str:
         raise NotImplementedError("_getFWPy method required")
 
     def _get_fpga_programmer(self) -> FPGA:
@@ -129,7 +129,7 @@ class ChipWhispererCommonInterface:
     def latest_fw(self) -> Dict[str, int]:
         "Get the newest firmware as a dict with elements major, minor and debug"
         fwver = self._getFWPy().split('.')
-        return {"major": fwver[0], "minor": fwver[1]}
+        return {"major": int(fwver[0]), "minor": int(fwver[1])}
 
     @property
     def latest_fw_str(self) -> str:
