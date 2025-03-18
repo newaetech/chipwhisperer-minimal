@@ -128,13 +128,13 @@ class ChipWhispererCommonInterface:
     @property
     def latest_fw(self) -> Dict[str, int]:
         "Get the newest firmware as a dict with elements major, minor and debug"
-        fwver = self._getFWPy()
+        fwver = self._getFWPy().split('.')
         return {"major": fwver[0], "minor": fwver[1]}
 
     @property
     def latest_fw_str(self) -> str:
         fwver = self._getFWPy()
-        return "{}.{}.0".format(fwver[0], fwver[1])
+        return fwver
 
     @property
     def fw_version(self) -> Dict[str, int]:
