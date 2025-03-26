@@ -882,28 +882,3 @@ class EnumTranslationAPI(EnumTranslationToHW, HWToEnumTranslation):
         )
 
     hw_values = EnumTranslationToHW.hw_values
-
-
-class Lister(list):
-    """Class that behaves like a list, but can set individual elements using a getter/setter.
-    """
-    def __setitem__(self, *args, **kwargs):
-        oldval = self._getter()
-        oldval[args[0]] = args[1]
-        self._setter(oldval)
-        pass
-
-    def __repr__(self):
-        oldrepr = super().__repr__()
-        return f"Lister({oldrepr})"
-
-    def __init__(self, *args, **kwargs):
-        if "getter" not in kwargs:
-            raise KeyError("Lister requires a getter")
-        if "setter" not in kwargs:
-            raise KeyError("Lister requires a setter")
-        
-        self._getter = kwargs.pop("getter")
-        self._setter = kwargs.pop("setter")
-        super().__init__(*args, **kwargs)
-
