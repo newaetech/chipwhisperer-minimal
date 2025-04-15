@@ -282,7 +282,7 @@ class SimpleSerial2(TargetTemplate):
             The return code from the ChipWhisperer command or None if the target
             failed to ack
         """
-        rtn = self.read_cmd('e')
+        rtn = self.read_cmd('e', timeout=timeout)
         if not rtn:
             target_logger.error("Device did not ack")
             return
