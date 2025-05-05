@@ -571,7 +571,7 @@ class SimpleSerial2(TargetTemplate):
             return None
 
         if ord(x[-1]) != 0x00:
-            target_logger.error("Missing frame byte at end of packet {}".format(hex(ord[x[-1]])))
+            target_logger.error("Missing frame byte at end of packet {}".format(hex(ord(x[-1]))))
 
         target_logger.debug("2nd read: {}".format(bytearray(x.encode('latin-1'))))
 
