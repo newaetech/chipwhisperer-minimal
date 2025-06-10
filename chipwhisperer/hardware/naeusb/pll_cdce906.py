@@ -118,23 +118,23 @@ class PLLCDCE906(object):
         return freq
 
     def pll_outenable_set(self, enabled, outnum):
-        """Enable or disable a PLL
+        """Enable or disable an output on the PLL
 
         Args:
             enabled (bool): Whether to enable (True) or disable (False) the
-                specified PLL.
-            outnum (int): The PLL to enable or disable
+                specified output.
+            outnum (int): The output to enable or disable
         """
         self.outputUpdateOutputs(outnum, pllenabled_new=enabled)
 
     def pll_outenable_get(self, outnum):
-        """Get whether a PLL is enabled or not
+        """Get whether a PLL output is enabled or not
 
         Args:
-            outnum (int): The PLL to get the enable status of
+            outnum (int): The output to get the enable status of
 
         Returns:
-            True if the PLL is enabled, False if it isn't
+            True if the output is enabled, False if it isn't
         """
         outpin = self.outnumToPin(outnum)
         data = self.cdce906read(19 + outpin)
