@@ -240,13 +240,12 @@ class Samba(object):
             ser.flush()
             ser.write(b"#")
             ser.flush()
-            target_logger.info("AutoBaud: ")
-            target_logger.info(str(ser.read(3)))
+            ser.read(3)
 
         # Binary mode
         ser.write("N#".encode("ascii"))
         res = ser.read(2)
-        target_logger.info("Setting binary mode result: " + str(res))
+        # print(res)
 
         cid = self.chip_id()
 
