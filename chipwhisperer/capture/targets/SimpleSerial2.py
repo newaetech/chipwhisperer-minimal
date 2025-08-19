@@ -40,6 +40,8 @@ class SimpleSerial2_Err:
 
 bytearray = util.CWByteArray # type: ignore
 
+SS_V2_FRAME_BYTE = 0x00
+SS_V2_POLY = 0x4D
 
 class SimpleSerial2(TargetTemplate):
     """Target object for new SimpleSerial V2 protocol.
@@ -73,7 +75,7 @@ class SimpleSerial2(TargetTemplate):
 
     The protocol is as follows:
 
-    [cmd, subcmd, data_len, data_0, ..., data_n, crc (poly=0xA6)]
+    [cmd, subcmd, data_len, data_0, ..., data_n, crc (poly=0x4D)]
 
     The frame is then consistant overhead byte stuffed (COBS) to remove
     all 0x00 bytes. An 0x00 byte is then appended to the end of the frame.
@@ -82,7 +84,7 @@ class SimpleSerial2(TargetTemplate):
 
     Return packets have the form:
 
-    [cmd, data_len, data_0, ..., data_n, crc (poly=0xA6)]
+    [cmd, data_len, data_0, ..., data_n, crc (poly=0x4D)]
 
     All commands sent to the target will be responded to with an
     ack/error packet.
@@ -120,22 +122,22 @@ class SimpleSerial2(TargetTemplate):
         """Get string error message based on integer error e
         """
         if e == SimpleSerial2_Err.OK:
-            return "No error"
+            return "no error"
         if e == SimpleSerial2_Err.ERR_CMD:
-            return "Invalid comand"
+            return "invalid comand"
         if e == SimpleSerial2_Err.ERR_CRC:
-            return "Bad CRC"
+            return "bad CRC"
         if e == SimpleSerial2_Err.ERR_TIMEOUT:
-            return "Read timed out"
+            return "read timed out"
         if e == SimpleSerial2_Err.ERR_LEN:
-            return "Invalid frame length"
+            return "invalid packet length"
         if e == SimpleSerial2_Err.ERR_FRAME_BYTE:
-            return "Frame byte in expected spot"
+            return "frame byte in unexpected spot"
         return "Unknown error"
 
     @staticmethod
     def _calc_crc(buf):
-        """Calculate CRC (0xA6) for buf
+        """Calculate CRC (0x4D) for buf
         """
         crc = 0x00
         try:
@@ -143,7 +145,7 @@ class SimpleSerial2(TargetTemplate):
                 crc ^= b
                 for _ in range(8):
                     if crc & 0x80:
-                        crc = (crc << 1) ^ 0x4D
+                        crc = (crc << 1) ^ SS_V2_POLY
                         crc &= 0xFF
                     else:
                         crc <<= 1
@@ -153,20 +155,22 @@ class SimpleSerial2(TargetTemplate):
         return crc
 
 
-    def _stuff_data(self, buf):
+    @staticmethod
+    def _stuff_data(buf):
         """Apply COBS to buf
         """
         l = len(buf)
         ptr = 0
         last = 0
         for i in range(1, l):
-            if (buf[i] == self._frame_byte):
+            if (buf[i] == SS_V2_FRAME_BYTE):
                 buf[last] = i - last
                 last = i
                 target_logger.debug("Stuffing byte {}".format(i))
         return buf
 
-    def _unstuff_data(self, buf):
+    @staticmethod
+    def _unstuff_data(buf):
         """Removes COBS from buf
 
         Can currently get into an infinite loop, don't know why
@@ -180,7 +184,7 @@ class SimpleSerial2(TargetTemplate):
         while n < l:
             target_logger.debug("Unstuff position {}".format(n))
             tmp = buf[n]
-            buf[n] = self._frame_byte
+            buf[n] = SS_V2_FRAME_BYTE
             n += tmp
             if (n == 0) and (tmp == 0):
                 target_logger.error("Infinite loop in unstuff data")
@@ -282,14 +286,14 @@ class SimpleSerial2(TargetTemplate):
             The return code from the ChipWhisperer command or None if the target
             failed to ack
         """
-        rtn = self.read_cmd('e')
+        rtn = self.read_cmd('e', timeout=timeout)
         if not rtn:
             target_logger.error("Device did not ack")
             return
         if rtn[3] != 0x00:
-            target_logger.error(f"Device reported error {hex(rtn[3])}")
+            target_logger.error(f"Device reported error {self.strerror(rtn[3])} ({hex(rtn[3])})")
+            target_logger.error(f"Full packet: {bytearray(rtn)}")
             self.flush_on_error()
-            target_logger.error(bytearray(rtn))
         return rtn[3:-2]
 
 
@@ -378,7 +382,7 @@ class SimpleSerial2(TargetTemplate):
 
         next_frame = self._unstuff_data(response)
         if cmd and response[1] != cmd:
-            target_logger.warning(f"Unexpected start to command {response[1]}")
+            target_logger.warning(f"Unexpected start to command {hex(response[1])}, expected {hex(cmd)}")
 
         l = response[2]
 
@@ -471,9 +475,19 @@ class SimpleSerial2(TargetTemplate):
 
         return command_list
 
+    def _conv_unstuffed_to_dict(self, packet):
+        """Assumes null bytes are still in there
+        """
+        cmd = packet[1]
+        dlen = packet[2]
+        data = bytearray(packet[3:-2])
+        crc = packet[-2]
+        return {"cmd" : cmd, "dlen": dlen, "data": data, "crc": crc, "raw": packet}
+        pass
 
-    def read_cmd(self, cmd=None, pay_len=None, timeout=250, flush_on_err=None):
-        """Read and decode simpleserial-v2 command
+    def read_cmd(self, cmd=None, pay_len=None, timeout=250, flush_on_err=None, as_dict=False):
+        """Read and decode simpleserial-v2 command. Returns the decoded raw packet, with the
+        preceding and following null bytes present.
 
         Args:
             cmd (str, optional): Expected start of the command. Will warn the user if
@@ -487,68 +501,88 @@ class SimpleSerial2(TargetTemplate):
             flush_on_err (bool/None, optional): If True, reset/flush the serial lines.
                 If False, don't. If None, determine via whether or not flush_on_err
                 was True or False when passed to con()
+            as_dict (bool, optional): If True, return as a dict specifying each part of the SSV2 packet. Otherwise, return
+                the raw unstuffed packet. Defaults to false
+
+        Return:
+            The return will either be the raw decoded packet, or a dictionary specifying the different SSV2 fields
+            if as_dict is true. For example, a no error ack packet will be returned as either:
+                
+                bytearray([0x00, 0x65, 0x01, 0x00, 0xEB, 0x00])
+                # or
+                {'cmd': 0x65, 'dlen': 0x01, 'data': bytearray([0x00]), 'crc': 0xEB, 'raw': []} # raw same as above
         """
         tmp = None
+        min_len = 5 # minimum length of packet (0x00, cmd, dlen, crc, 0x00)
+
         if not flush_on_err is None:
             tmp = self._flush_on_err
             self._flush_on_err = flush_on_err
+
+        # handle cmd being a character
         if isinstance(cmd, str):
             cmd = ord(cmd[0])
-        if pay_len is None:
-            recv_len = 3
-        else:
-            recv_len = 5 + pay_len #cmd, len, data, crc
-        response = self.read(recv_len, timeout=timeout)
+
+        # initial read, guaranteed to get [0x00, cmd, dlen] + 2 more
+        response = self.read(min_len, timeout=timeout)
         target_logger.debug("1st read: {}".format(bytearray(response.encode())))
 
-        if response is None or len(response) < recv_len:
+        # if we get fewer than 5 bytes, read timed out
+        if response is None or len(response) < min_len:
             self.flush_on_error()
             target_logger.warning("Read timed out: " + response)
             return None
 
         response = bytearray(response.encode('latin-1'))
-        if (self._frame_byte in response and len(response) == 3) or \
-            (self._frame_byte in response[:-1] and len(response) != 3):
+        # if there's a null byte in the first three, something went wrong
+        if (self._frame_byte in response and len(response) == 3):
             target_logger.warning(f"Unexpected frame byte in {response}")
             self.flush_on_error()
             return None
-        next_frame = self._unstuff_data(response)
+
+        # unstuff current packet
+        next_frame = bytearray(response)
+        self._unstuff_data(next_frame)
         target_logger.debug("Unstuffed first read: {}".format(next_frame))
+
+        # check if this looks like an error packet
+
+        # can now check if cmd is correct
         if cmd and response[1] != cmd:
-            target_logger.warning(f"Unexpected start to command {response[1]}")
+            target_logger.warning(f"Unexpected start to command {hex(response[1])}, expected {hex(cmd)}")
+            if (next_frame[1] == ord('e')) and (next_frame[2] == 1):
+                target_logger.error("Error packet {} (0x{:02X}) detected".format(self.strerror(next_frame[3]), next_frame[3]))
+                # doing another read of 1 should get the final byte so user can do subsequent reads okay
+                return next_frame + bytearray(self.read(1, timeout=timeout).encode('latin-1'))
 
-        l = response[2]
+        dlen = response[2]
+        if pay_len and pay_len != dlen:
+            target_logger.warning(f"Packet indicates different length than received {dlen} vs {pay_len}")
 
-        if not pay_len:
-            # user didn't specify, do second read based on sent length
-            target_logger.debug("Length not specified, reading {} bytes (plus CRC and frame byte) based on packet".format(l))
-            x = self.read(l+2, timeout=timeout)
-            target_logger.debug("2nd read: {}".format(bytearray(x.encode())))
-            if x is None:
-                target_logger.warning("Read timed out")
-                self.flush_on_error()
-                return None
-            if len(x) != (l + 2):
-                target_logger.warning(f"Didn't get all data {len(x)}, {l+2}")
-                target_logger.warning(bytearray(x.encode('latin-1')))
-                target_logger.warning(response)
-            response.extend(bytearray(x.encode('latin-1')))
-            pay_len = len(response) - 5
+        # Rely on dlen for rest of read:296
 
-            # need to do second unstuff since we read stuff after last one
-            if self._frame_byte in response[3:-1]:
-                target_logger.warning(f"Unexpected frame byte in {response}")
-                self.flush_on_error()
-            resp_cpy = response[next_frame:]
-            target_logger.debug("Unstuffing {}".format(resp_cpy))
-            self._unstuff_data(resp_cpy)
-            response[next_frame:] = resp_cpy[:]
-        if pay_len and l != pay_len:
-            target_logger.warning(f"Unexpected length {l}, {pay_len}")
+        # NOTE: First read was 5 bytes (0x00, cmd, dlen), plus 2 more, so a read of dlen should get all of the data
+        x = self.read(dlen, timeout=timeout)
+        if (x is None) or (len(x) != dlen):
+            if not x is None:
+                response += bytearray(x.encode('latin-1'))
+            target_logger.warning("Read timed out. Read {}. Expected {} bytes, got {}".format(response, len(x), dlen))
             self.flush_on_error()
             return None
 
-        crc = self._calc_crc(response[1:-2]) #calc crc for all bytes except last (crc)
+        if ord(x[-1]) != 0x00:
+            target_logger.error("Missing frame byte at end of packet {}".format(hex(ord(x[-1]))))
+
+        target_logger.debug("2nd read: {}".format(bytearray(x.encode('latin-1'))))
+
+        # add rest of read to response
+        response.extend(bytearray(x.encode("latin-1")))
+
+        # do unstuff over full packet
+        self._unstuff_data(response)
+
+        # ------------------------
+        crc = self._calc_crc(response[1:-2]) #calc crc for all bytes except last (crc), initial and final 0x00
         if crc != response[-2]:
             target_logger.warning(f"Invalid CRC. Expected {crc} got {response[-2]}")
 
@@ -561,6 +595,9 @@ class SimpleSerial2(TargetTemplate):
             self._flush_on_err = tmp
 
         target_logger.info("Received: {}".format(response))
+
+        if as_dict:
+            return self._conv_unstuffed_to_dict(response)
 
         return response
 
