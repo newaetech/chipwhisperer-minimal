@@ -331,8 +331,7 @@ class SimpleSerial2(TargetTemplate):
             glitch_timeout (int, optional): Value to wait for additional data
                 if expected data isn't returned. Useful to have a longer
                 timeout for a reset or other unexpected event. Defaults to 1000
-            ack (bool, optional): Expect an ack packet at the end for SimpleSerial
-                >= 2. Defaults to True.
+            ack (bool, optional): Unused / not implemented yet.
 
         Returns:
             A dictionary with these elements:
